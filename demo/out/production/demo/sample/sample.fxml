@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+
+<AnchorPane fx:id="mainPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+   <children>
+      <AnchorPane fx:id="leftPane" prefHeight="200.0" prefWidth="200.0">
+         <children>
+            <ScrollPane layoutY="31.0" prefHeight="768.0" prefWidth="487.0">
+               <content>
+                  <TextArea fx:id="inputText" prefHeight="765.0" prefWidth="485.0" />
+               </content>
+            </ScrollPane>
+         </children>
+      </AnchorPane>
+      <MenuBar layoutY="-2.0" prefHeight="32.0" prefWidth="1200.0">
+        <menus>
+          <Menu fx:id="menuFile" mnemonicParsing="false" text="文件">
+            <items>
+              <MenuItem fx:id="openFile" mnemonicParsing="false" onAction="#onOpenFile" text="打开" />
+                  <MenuItem fx:id="saveFile" mnemonicParsing="false" onAction="#onSaveFile" text="保存" />
+                  <MenuItem fx:id="saveFileTo" mnemonicParsing="false" onAction="#onSaveFileTo" text="另存为" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem fx:id="recentFile" mnemonicParsing="false" onAction="#onRecentFile" text="最近文件" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem fx:id="exit" mnemonicParsing="false" onAction="#onExit" text="退出" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="编辑">
+            <items>
+              <MenuItem mnemonicParsing="false" text="撤销" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" text="剪切" />
+                  <MenuItem mnemonicParsing="false" text="复制" />
+                  <MenuItem mnemonicParsing="false" text="粘贴" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="词法分析">
+            <items>
+              <MenuItem fx:id="cifa" mnemonicParsing="false" onAction="#onCifa" text="词法分析器" />
+                  <MenuItem mnemonicParsing="false" text="NFA_DFA_MFA" />
+            </items>
+          </Menu>
+            <Menu fx:id="yufa" mnemonicParsing="false" onAction="#onYufa" text="语法分析">
+              <items>
+                <MenuItem mnemonicParsing="false" text="语法分析器" />
+                  <MenuItem mnemonicParsing="false" text="LL(1)预测分析" />
+                  <MenuItem mnemonicParsing="false" text="运算符优先" />
+                  <MenuItem mnemonicParsing="false" text="LR分析" />
+              </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="中间代码" />
+            <Menu fx:id="getObjectCode" mnemonicParsing="false" onAction="#onGetObjectCode" text="目标代码生成" />
+            <Menu mnemonicParsing="false" text="查看">
+              <items>
+                <MenuItem mnemonicParsing="false" text="Action 1" />
+              </items>
+            </Menu>
+            <Menu mnemonicParsing="false" text="帮助">
+              <items>
+                <MenuItem fx:id="help" mnemonicParsing="false" onAction="#onHelp" text="帮助" />
+              </items>
+            </Menu>
+        </menus>
+      </MenuBar>
+      <AnchorPane fx:id="rightPane" layoutX="487.0" layoutY="29.0" prefHeight="768.0" prefWidth="714.0">
+         <children>
+            <ScrollPane prefHeight="366.0" prefWidth="714.0">
+               <content>
+                  <TextArea fx:id="outputText_up" editable="false" prefHeight="363.0" prefWidth="712.0" />
+               </content>
+            </ScrollPane>
+            <ScrollPane layoutY="365.0" prefHeight="404.0" prefWidth="714.0">
+               <content>
+                  <TextArea fx:id="outputText_down" editable="false" prefHeight="402.0" prefWidth="712.0" />
+               </content>
+            </ScrollPane>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>
