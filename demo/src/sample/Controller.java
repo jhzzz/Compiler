@@ -164,6 +164,27 @@ public class Controller {
     }
 
     @FXML
+    void onMidCode(ActionEvent event) {
+        outputText_up.clear();
+        str = inputText.getText();
+        Cifa cifa = new Cifa();
+        Yufa yufa = new Yufa();
+        cifa.SortFirstChar(str);
+        List<String> tokenList = cifa.getValue();
+        List<String> wordList = cifa.getToken();
+        ArrayList<MidCodeTable> midCodeTables = yufa.getMidCodeTable();
+        tokenList.add("#");
+        System.out.println(tokenList);
+        yufa.parser(tokenList,wordList);
+        for(int i = 1; i < midCodeTables.size(); i++){
+            outputText_up.appendText(i+"\t");
+            outputText_up.appendText(midCodeTables.get(i).getOperater()+",");
+            outputText_up.appendText(midCodeTables.get(i).getObject1()+",");
+            outputText_up.appendText(midCodeTables.get(i).getObject2()+",");
+            outputText_up.appendText(midCodeTables.get(i).getResult()+"\n");
+        }
+    }
+    @FXML
     void onYufa(ActionEvent event) {
         outputText_down.clear();
         str = inputText.getText();
@@ -183,16 +204,6 @@ public class Controller {
             for(int i = 0; i < errorList.size(); i++) {
                 outputText_down.appendText(errorList.get(i)+"\n");
             }
-        }
-
-        ArrayList<MidCodeTable> midCodeTables = yufa.getMidCodeTable();
-
-        for(int i = 0; i < midCodeTables.size(); i++){
-            System.out.print(i+"\t");
-            System.out.print(midCodeTables.get(i).getOperater()+",");
-            System.out.print(midCodeTables.get(i).getObject1()+",");
-            System.out.print(midCodeTables.get(i).getObject2()+",");
-            System.out.println(midCodeTables.get(i).getResult());
         }
     }
 

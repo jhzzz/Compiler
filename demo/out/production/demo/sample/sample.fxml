@@ -47,15 +47,18 @@
                   <MenuItem mnemonicParsing="false" text="NFA_DFA_MFA" />
             </items>
           </Menu>
-            <Menu fx:id="yufa" mnemonicParsing="false" onAction="#onYufa" text="语法分析">
+            <Menu mnemonicParsing="false" text="语法分析">
               <items>
-                <MenuItem mnemonicParsing="false" text="语法分析器" />
+                <MenuItem fx:id="yufa" mnemonicParsing="false" onAction="#onYufa" text="语法分析器" />
                   <MenuItem mnemonicParsing="false" text="LL(1)预测分析" />
                   <MenuItem mnemonicParsing="false" text="运算符优先" />
                   <MenuItem mnemonicParsing="false" text="LR分析" />
               </items>
             </Menu>
-            <Menu mnemonicParsing="false" text="中间代码" />
+            <Menu mnemonicParsing="false" text="中间代码">
+               <items>
+                  <MenuItem fx:id="getMidCode" mnemonicParsing="false" onAction="#onMidCode" text="中间代码生成" />
+               </items></Menu>
             <Menu fx:id="getObjectCode" mnemonicParsing="false" onAction="#onGetObjectCode" text="目标代码生成" />
             <Menu mnemonicParsing="false" text="查看">
               <items>
@@ -73,7 +76,7 @@
          <children>
             <ScrollPane prefHeight="366.0" prefWidth="714.0">
                <content>
-                  <TextArea fx:id="outputText_up" editable="false" prefHeight="363.0" prefWidth="712.0" />
+                  <TextArea fx:id="outputText_up" editable="true" prefHeight="363.0" prefWidth="712.0" />
                </content>
             </ScrollPane>
             <ScrollPane layoutY="365.0" prefHeight="404.0" prefWidth="714.0">
