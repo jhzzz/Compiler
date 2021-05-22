@@ -1,13 +1,15 @@
 package sample;
 
 import sample.table.MidCodeTable;
-import sample.table.VariabeTable;
+import sample.table.VariableTable;
 import sample.table.returnValue;
+import sample.table.funcTable;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.SplittableRandom;
+import java.util.Stack;
 
 public class Yufa {
     private String token = null;
@@ -19,8 +21,13 @@ public class Yufa {
     private int NXQ = 1;
     private int t = 0;
     private ArrayList<MidCodeTable> midCodeTables = new ArrayList<>();
-    private HashMap<String,ArrayList<VariabeTable>> variabeTables;
-    private HashMap<String,String> symbolTables;
+    private HashMap<Integer,ArrayList<VariableTable>> variabeTables = new HashMap<>();
+    private HashMap<Integer,funcTable> funcTables = new HashMap<>();
+    private HashMap<String ,Integer> symbolTables = new HashMap<>();
+    private Stack scopeStack = new Stack();
+    private int scope = 0;
+    private int variableCount = 0;
+    private int functionCount = 0;
 
     public void match(String s) {
         if (token.equals(s)) {
@@ -50,6 +57,28 @@ public class Yufa {
     public int getNXQ(){
         return NXQ;
     }
+    public String getSymbolTable(){
+        String symbolTable= "";
+        String variabeTable = "";
+        String funcTable = "";
+
+        variabeTable = variabeTable + "variableTable:\n";
+        for(int i = 0; i < variabeTables.size(); i++){
+            for(int j = 0; j < variabeTables.get(i).size(); j++) {
+                String variabeTableItem = variabeTables.get(i).get(j).toString()+"\n";
+                variabeTable = variabeTable + variabeTableItem;
+            }
+        }
+
+        funcTable = funcTable + "\nfunctionTable:\n";
+        for(int i = 0; i < funcTables.size(); i++){
+            String funcTableItem = funcTables.get(i).toString()+"\n";
+            funcTable = funcTable + funcTableItem;
+        }
+
+        symbolTable = variabeTable + funcTable;
+        return symbolTable;
+    }
 
 
     public void parser(List<String> tokenList, List<String> wordList) {
@@ -57,6 +86,7 @@ public class Yufa {
         this.wordList = wordList;
         midCodeTables.add(0,new MidCodeTable(null,null,null,null));
         token = nextToken();
+        scopeStack.push(scope++);
         while (token.equals("102") || token.equals("101") || token.equals("103") || token.equals("105") || token.equals("107"))
             declarationSen();
 
@@ -100,13 +130,14 @@ public class Yufa {
         } else return false;
     }
 
-
-    public void sentence() {
+    public returnValue sentence() {
+        returnValue chain = new returnValue();
         if (token.equals("102") || token.equals("103") || token.equals("101") || token.equals("107") || token.equals("105")) {
             declarationSen();
         } else {
-            executeSen();
+            chain = executeSen();
         }
+        return chain;
     }
 
     public void declarationSen() {
@@ -151,73 +182,111 @@ public class Yufa {
     }
 
     public void variableDecl() {
-        if (!(token.equals("102") || token.equals("101") || token.equals("103"))) error();
-        else match(token);
+//        if (!(token.equals("102") || token.equals("101") || token.equals("103"))) error();
+//        else match(token);
+        String type = null;
+        if(token.equals("102")){
+            match(token);
+            type = "int";
+        }else if(token.equals("101")){
+            match(token);
+            type = "char";
+        }else if(token.equals("103")){
+            match(token);
+            type = "float";
+        }else error();
         if (!isIdentifier(token)) error();
-        variableDeclTable();
+        variableDeclTable(type);
 
     }
 
-    public void variableDeclTable() {
+    public void variableDeclTable(String type) {
         if (!isIdentifier(token)) error();
-        SingleVariableDecl();
+        SingleVariableDecl(type);
         if (token.equals("303")) {
             match(token);
         } else if (token.equals("304")) {
             match(token);
             if (isIdentifier(token)) {
-                variableDeclTable();
+                variableDeclTable(type);
             } else error();
         } else error();
     }
 
-    public void SingleVariableDecl() {
+    public void SingleVariableDecl(String type) {
+        String value = null;
         if (!isIdentifier(token)) error();
         else match(token);
+        String id = wordList.get(count-2);
+        int entry = insertVariable(id);
+
         if (token.equals("219")) {
             match(token);
-            expression();
+            value = aexpr().getPlace();
         }
+        entryVar(entry,id,type,value,String.valueOf(scopeStack));
     }
+
 
     public void funcDecl() {
+        ArrayList<String> paraType = new ArrayList<>();
         if (!(token.equals("102") || token.equals("101") || token.equals("103") || token.equals("107"))) error();
         else match(token);
+        String funcType = wordList.get(count-2);
         if (!isIdentifier(token)) error();
         else match(token);
-        if (!token.equals("201")) error();
+        String funcName = wordList.get(count-2);
+        int entry = insertFunction(funcName);
+        if (!token.equals("201")) error();//(
         else match(token);
-        funcDeclParaList();
-        if (!token.equals("202")) error();
+        paraType = funcDeclParaList(paraType);
+        entryFunc(entry,funcName,funcType,paraType.size(),paraType);
+        if (!token.equals("202")) error();//)
         else match(token);
-        if (!token.equals("303")) error();
+        if (!token.equals("303")) error();//;
         else match(token);
 
     }
 
-    public void funcDeclParaList() {
+    public ArrayList<String> funcDeclParaList(ArrayList<String> paraType) {
+
         if (token.equals("102") || token.equals("101") || token.equals("103")) {
-            funcDeclPara();
+            paraType = funcDeclPara(paraType);
         }
+        return paraType;
     }
 
-    public void funcDeclPara() {
-        if (!(token.equals("102") || token.equals("101") || token.equals("103"))) error();
-        else match(token);
-        if (token.equals("304")) {
+    public ArrayList<String> funcDeclPara(ArrayList<String> paraType) {
+//        if (!(token.equals("102") || token.equals("101") || token.equals("103"))) error();
+//        else match(token);
+        if(token.equals("102")){
             match(token);
-            funcDeclPara();
+            paraType.add("int");
+        }else if(token.equals("101")){
+            match(token);
+            paraType.add("char");
+        }else if(token.equals("103")){
+            match(token);
+            paraType.add("float");
+        }else error();
+
+        if (token.equals("304")) {//,
+            match(token);
+            funcDeclPara(paraType);
         }
+        return paraType;
     }
 
-    public void executeSen() {
+    public returnValue executeSen() {
+        returnValue chain = new returnValue();
         if (token.equals("301")) {
-            compoundSen();
+            chain = compoundSen();
         } else if (token.equals("111") || token.equals("113") || token.equals("110") || token.equals("109") || token.equals("106")) {
-            controlSen();
+            chain = controlSen();
         } else if (isIdentifier(token)) {
             dataManageSen();
         }
+        return chain;
     }
 
     public void dataManageSen() {
@@ -230,16 +299,16 @@ public class Yufa {
         } else error();
     }
 
-    public int assignSen() {
-        int chain = assignExpr();
+    public void assignSen() {
+        assignExpr();
         if (!token.equals("303")) error();
         else match(token);
-        return chain;
     }
 
 
-    public int  assignExpr() {
+    public returnValue assignExpr() {
         String id = "";
+        returnValue e = new returnValue();
         if (!isIdentifier(token)) error();
         else {
             id = wordList.get(count-1);
@@ -248,10 +317,10 @@ public class Yufa {
         if (!token.equals("219")) error();
         else {
             match(token);
-            String e_place = aexpr().getPlace();
-            gencode("=",e_place,"",id);
+            e = aexpr();
+            gencode("=",e.getPlace(),"",id);
         }
-        return NXQ-1;
+        return e;
 
     }
 
@@ -262,14 +331,18 @@ public class Yufa {
 
     }
 
-    public void funcTransfer() {
+    public String funcTransfer() {
         if (!isIdentifier(token)) error();
         else match(token);
-        if (!token.equals("201")) error();
+        String id = wordList.get(count-2);
+        if (!token.equals("201")) error();//(
         else match(token);
         realParaList();
-        if (!token.equals("202")) error();
+        if (!token.equals("202")) error();//)
         else match(token);
+        String t = newtemp();
+        gencode("call",id,"",t);
+        return t;
     }
 
     public void realParaList() {
@@ -279,7 +352,8 @@ public class Yufa {
     }
 
     public void realPara() {
-        expression();
+        String place = aexpr().getPlace();
+        gencode("para",place,"","");
         if (token.equals("304")) {
             match(token);
             realPara();
@@ -287,36 +361,45 @@ public class Yufa {
 
     }
 
-    public void controlSen() {
+    public returnValue controlSen() {
+        returnValue chain = new returnValue();
         if (token.equals("111")) {
-            ifs();
+            chain = ifs();
         } else if (token.equals("113")) {
-            fors();
+            chain = fors();
         } else if (token.equals("110")) {
-            whiles();
+            chain = whiles();
         } else if (token.equals("109")) {
-            doWhiles();
+            chain = doWhiles();
         } else if (token.equals("106")) {
             returnSen();
         } else error();
+        backpatch(Integer.parseInt(chain.getChain()),Integer.toString(NXQ));
+        return chain;
     }
 
-    public void compoundSen() {
-        if (!token.equals("301")) error();
+    public returnValue compoundSen() {
+        returnValue chain = new returnValue();
+        if (!token.equals("301")) error();//{
         else match(token);
-        senTable();
-        if (!token.equals("302")) error();
+        scopeStack.push(scope++);
+        chain = senTable();
+        if (!token.equals("302")) error();//}
         else match(token);
+        scopeStack.pop();
+        return chain;
     }
 
-    public void senTable() {
+    public returnValue senTable() {
+        returnValue chain = new returnValue();
         if (!token.equals("302")) {
-            sentence();
+            chain = sentence();
             senTable();
         }
+        return chain;
     }
 
-    public int ifs() {
+    public returnValue ifs() {
         if (!token.equals("111")) error();//if
         else match(token);
         if (!token.equals("201")) error();//(
@@ -324,95 +407,157 @@ public class Yufa {
         returnValue e = bexpr();
         if (!token.equals("202")) error();//)
         else match(token);
-        //sentence();
         backpatch(Integer.parseInt(e.getTc()),Integer.toString(NXQ));
-        int s1_chain = assignSen();
-        if (token.equals("112")) {//else
-            int q = NXQ;
-            gencode("j","","","0");
-            backpatch(Integer.parseInt(e.getFc()),Integer.toString(NXQ));
-            int t_chain = merge(s1_chain,q);
+        String c_chain = e.getFc();
 
+        String s1_chain = sentence().getChain();
+
+        //int s1_chain = assignSen();
+        String s_chain = Integer.toString(merge(Integer.parseInt(c_chain),Integer.parseInt(s1_chain)));
+        if (token.equals("112")) {//else
             match(token);
 
-            //sentence();
-            int s2_chain = assignSen();
-            return merge(t_chain,s2_chain);
-        }else if(token.equals("303")){
-            return merge(s1_chain,Integer.parseInt(e.getFc()));
+            int q = NXQ;
+            gencode("j","","","0");
+            backpatch(Integer.parseInt(c_chain),Integer.toString(NXQ));
+            String t_chain = Integer.toString(merge(Integer.parseInt(s1_chain),q));
+
+            String s2_chain = sentence().getChain();
+            //int s2_chain = assignSen();
+            s_chain = Integer.toString(merge(Integer.parseInt(t_chain),Integer.parseInt(s2_chain)));
+            //backpatch(q,Integer.toString(NXQ));
+            //return new returnValue("","0","0",s_chain);
         }
-        return 0;
+        //else backpatch(Integer.parseInt(c_chain),Integer.toString(NXQ));
+//        else if(token.equals("303")){
+//            s_chain = Integer.toString(merge(Integer.parseInt(s1_chain),Integer.parseInt(e.getFc())));
+//            //return new returnValue("","0","0",s_chain);
+//        }
+        return new returnValue("","0","0",s_chain);
     }
 
-    public void fors() {
-        if (!token.equals("113")) error();
+    public returnValue fors() {
+        if (!token.equals("113")) error();//for
         else match(token);
-        if (!token.equals("201")) error();
+        if (!token.equals("201")) error();//(
         else match(token);
-        expression();
-        if (!token.equals("303")) error();
+        String e1_place = assignExpr().getPlace();
+        if (!token.equals("303")) error();//;
         else match(token);
-        expression();
-        if (!token.equals("303")) error();
+        /********E(1)*********/
+//        String f_place = newtemp();
+//        gencode("=",e1_place,"",f_place);
+        int f_test = NXQ;
+
+        returnValue e2 = bexpr();
+        if (!token.equals("303")) error();//;
         else match(token);
-        expression();
-        if (!token.equals("202")) error();
+        /**********E(2)***********/
+        String a_place = newtemp();
+        //gencode("=",e2_place,"",a_place);
+        int a_chain = NXQ;
+        gencode("jz",a_place,"","0");
+        int a_right = NXQ;
+        gencode("j","","","0");
+        int a_inc = NXQ;
+        int a_test = f_test;
+
+        assignExpr();
+        if (!token.equals("202")) error();//)
         else match(token);
-        compoundSen();
+        /**********E(3)***********/
+        gencode("j","","",Integer.toString(a_test));
+        backpatch(a_right,Integer.toString(NXQ));
+        int b_chain = a_chain;
+        int b_inc = a_inc;
+
+        String s1_chain = sentence().getChain();
+        /**********S(1)***********/
+        backpatch(Integer.parseInt(s1_chain),Integer.toString(NXQ));
+        gencode("j","","",Integer.toString(b_inc));
+        int s_chain = b_chain;
+
+        return new returnValue("","0","0",Integer.toString(s_chain));
+
     }
 
-    public void whiles() {
-        if (!token.equals("110")) error();
+    public returnValue whiles() {
+        if (!token.equals("110")) error();//while
         else match(token);
-        if (!token.equals("201")) error();
+        if (!token.equals("201")) error();//(
         else match(token);
-        expression();
-        if (!token.equals("202")) error();
+        returnValue e = bexpr();
+        if (!token.equals("202")) error();//)
         else match(token);
-        compoundSen();
+        int head = NXQ;
+        backpatch(Integer.parseInt(e.getTc()),Integer.toString(head));
+        compoundSen().getChain();
+        return new returnValue("","0","0",e.getFc());
     }
 
-    public void doWhiles() {
-        if (!token.equals("109")) error();
+    public returnValue doWhiles() {
+        if (!token.equals("109")) error();//do
         else match(token);
-        repeatCompoundSen();
-        if (!token.equals("110")) error();
+
+        int d_head = NXQ;
+
+        //String s1_chain = repeatCompoundSen().getChain();
+        String s1_chain = sentence().getChain();
+        if (!token.equals("110")) error();//while
         else match(token);
-        if (!token.equals("201")) error();
+
+        int u_head = d_head;
+        backpatch(Integer.parseInt(s1_chain),Integer.toString(NXQ));
+
+        if (!token.equals("201")) error();//(
         else match(token);
-        expression();
-        if (!token.equals("202")) error();
+
+        returnValue e = bexpr();
+        backpatch(Integer.parseInt(e.getTc()),Integer.toString(u_head));
+        String s_chain = e.getFc();
+
+        if (!token.equals("202")) error();//)
         else match(token);
-        if (!token.equals("303")) error();
+        if (!token.equals("303")) error();//;
         else match(token);
+        //backpatch(Integer.parseInt(s_chain),Integer.toString(NXQ));
+
+        return new returnValue("","0","0",s_chain);
     }
 
-    public void repeatSen() {
+    public returnValue repeatSen() {
+        returnValue chain = new returnValue();
         if (token.equals("102") || token.equals("101") || token.equals("103") || token.equals("107") || token.equals("105")) {
             declarationSen();
         } else if (token.equals("301")) {
-            repeatCompoundSen();
+            chain = repeatCompoundSen();
         } else if (token.equals("111") || token.equals("113") || token.equals("110") || token.equals("109") || token.equals("106") || token.equals("104") || token.equals("108")) {
-            repeatExecuteSen();
+            chain = repeatExecuteSen();
         }
+        return chain;
     }
 
-    public void repeatCompoundSen() {
+    public returnValue repeatCompoundSen() {
+        returnValue chain = new returnValue();
         if (!token.equals("301")) error();
         else match(token);
-        repeatSenTable();
+        chain = repeatSenTable();
         if (!token.equals("302")) error();
         else match(token);
+        return chain;
     }
 
-    public void repeatSenTable() {
+    public returnValue repeatSenTable() {
+        returnValue chain = new returnValue();
         if (!token.equals("302")) {
-            repeatSen();
+            chain = repeatSen();
             repeatSenTable();
         }
+        return chain;
     }
 
-    public void repeatExecuteSen() {
+    public returnValue repeatExecuteSen() {
+        returnValue chain = new returnValue();
         if (token.equals("111")) {
             repeatIfSen();
         } else if (token.equals("113")) {
@@ -428,6 +573,7 @@ public class Yufa {
         } else if (token.equals("108")) {
             continueSen();
         } else error();
+        return chain;
     }
 
     public void repeatIfSen() {
@@ -450,10 +596,13 @@ public class Yufa {
         else match(token);
         if (token.equals("303")) {
             match(token);
+            gencode("ret","","","");
+        }else {
+            String place = aexpr().getPlace();
+            if (!token.equals("303")) error();
+            else match(token);
+            gencode("ret","","",place);
         }
-        expression();
-        if (!token.equals("303")) error();
-        else match(token);
     }
 
     public void breakSen() {
@@ -477,12 +626,15 @@ public class Yufa {
         else match(token);
         if (!isIdentifier(token)) error();
         else match(token);
-        if (!token.equals("201")) error();
+        String name = wordList.get(count-2);
+        gencode(name,"","","");
+        if (!token.equals("201")) error();//(
         else match(token);
         funcDefParaList();
-        if (!token.equals("202")) error();
+        if (!token.equals("202")) error();//)
         else match(token);
         compoundSen();
+        gencode("ret","","","");
     }
 
     public void funcDefParaList() {
@@ -492,10 +644,32 @@ public class Yufa {
     }
 
     public void funcDefPara() {
-        if (!(token.equals("102") || token.equals("101") || token.equals("103"))) error();
-        else match(token);
+        String type = null;
+//        if (!(token.equals("102") || token.equals("101") || token.equals("103"))) error();
+//        else match(token);
+        if(token.equals("102")){
+            match(token);
+            type = "int";
+        }else if(token.equals("101")){
+            match(token);
+            type = "char";
+        }else if(token.equals("103")){
+            match(token);
+            type = "float";
+        }else error();
         if (!isIdentifier(token)) error();
         else match(token);
+        //
+        String id = wordList.get(count-2);
+        int entry = insertVariable(id);
+        if(variabeTables.containsKey(entry)){
+            variabeTables.get(entry).add(new VariableTable(id,null,type,null));
+        }else {
+            ArrayList<VariableTable> variabeTableList = new ArrayList<>();
+            variabeTableList.add(new VariableTable(id,null,type,null));
+            variabeTables.put(entry,variabeTableList);
+        }
+        //
         if (token.equals("304")) {
             match(token);
             funcDefPara();
@@ -554,17 +728,52 @@ public class Yufa {
 
     public returnValue rexpr(){
         String AE1 = aexpr().getPlace();
-        if(token.equals("213") | token.equals("214") | token.equals("215") |
-                token.equals("211") | token.equals("212") | token.equals("216")) {
+//        if(token.equals("213") | token.equals("214") | token.equals("215") |
+//                token.equals("211") | token.equals("212") | token.equals("216")) {
+//            match(token);
+//            String AE2 = aexpr().getPlace();
+//            String t = newtemp();
+//            gencode("jrop",AE1,AE2,t);
+//            return new returnValue(t,"0","0","0");
+//        }
+        if(token.equals("213")) {//>
             match(token);
             String AE2 = aexpr().getPlace();
             String t = newtemp();
-            gencode("jrop",AE1,AE2,t);
-            return new returnValue(t,null,null);
-            //gencode("j","","","0");
-            //return new returnValue(null,Integer.toString(NXQ),Integer.toString(NXQ+1));
+            gencode(">",AE1,AE2,t);
+            return new returnValue(t,"0","0","0");
+        }else if(token.equals("214")) {//>=
+            match(token);
+            String AE2 = aexpr().getPlace();
+            String t = newtemp();
+            gencode(">=",AE1,AE2,t);
+            return new returnValue(t,"0","0","0");
+        }else if(token.equals("215")) {//==
+            match(token);
+            String AE2 = aexpr().getPlace();
+            String t = newtemp();
+            gencode("==",AE1,AE2,t);
+            return new returnValue(t,"0","0","0");
+        }else if(token.equals("211")) {//<
+            match(token);
+            String AE2 = aexpr().getPlace();
+            String t = newtemp();
+            gencode("<",AE1,AE2,t);
+            return new returnValue(t,"0","0","0");
+        }else if(token.equals("212")) {//<=
+            match(token);
+            String AE2 = aexpr().getPlace();
+            String t = newtemp();
+            gencode("<=",AE1,AE2,t);
+            return new returnValue(t,"0","0","0");
+        }else if(token.equals("216")) {//!=
+            match(token);
+            String AE2 = aexpr().getPlace();
+            String t = newtemp();
+            gencode("!=",AE1,AE2,t);
+            return new returnValue(t,"0","0","0");
         }
-        return new returnValue(AE1,null,null);
+        return new returnValue(AE1,"0","0","0");
     }
 
 
@@ -633,14 +842,50 @@ public class Yufa {
             place.setPlace(wordList.get(count -1));
             match(token);
         } else if (isIdentifier(token) && token1.equals("201")) {
-            funcTransfer();
+            //funcTransfer();
+            place.setPlace(funcTransfer());
         } else error();
         return place;
     }
 
+    public int insertVariable(String id){
+        if(symbolTables.containsKey(id)){
+            return symbolTables.get(id);
+        }
+        symbolTables.put(id,variableCount++);
+        return variableCount-1;
+    }
+
+    public int insertFunction(String id){
+        if(symbolTables.containsKey(id)){
+            return symbolTables.get(id);
+        }
+        symbolTables.put(id,functionCount++);
+        return functionCount-1;
+    }
+
+    public int findVarible(String id){
+        for(int i = 0; i < symbolTables.size(); i++){
+            if(symbolTables.get(i).equals(id)) return i;
+        }
+        return 0;
+    }
+    public void entryVar(int entry, String name, String type, String value, String scope){
+        if(variabeTables.containsKey(entry)){
+            variabeTables.get(entry).add(new VariableTable(name,scope,type,value));
+        }else {
+            ArrayList<VariableTable> variabeTableList = new ArrayList<>();
+            variabeTableList.add(new VariableTable(name,scope,type,value));
+            variabeTables.put(entry,variabeTableList);
+        }
+    }
+    public void entryFunc(int entry, String name, String type, int paraCount, ArrayList<String> paras){
+        funcTables.put(entry,new funcTable(name,type,paraCount,paras));
+    }
+
     public void gencode(String operater, String ob1, String ob2, String result){
         midCodeTables.add(new MidCodeTable(operater,ob1,ob2,result));
-        System.out.println(NXQ+"\t"+operater+","+ob1+","+ob2+","+result);
+        //System.out.println(NXQ+"\t"+operater+","+ob1+","+ob2+","+result);
         NXQ++;
     }
 

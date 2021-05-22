@@ -1,11 +1,29 @@
 package sample.table;
 
-public class VariabeTable {
+import java.util.Stack;
+
+public class VariableTable {
     private String name;
     private String scope;
     private String type;
     private String value;
     private String addr;
+
+    public VariableTable(String name, String scope, String type, String value) {
+        this.name = name;
+        this.scope = scope;
+        this.type = type;
+        this.value = value;
+    }
+
+    @Override
+    public String toString() {
+        return  "name='" + name + '\'' +
+                "\t\tscope=" + scope +
+                "\t\ttype='" + type + '\'' +
+                "\t\tvalue='" + value + '\'' +
+                "\t\taddr='" + addr + '\'';
+    }
 
     public void setValue(String value) {
         this.value = value;
@@ -35,7 +53,7 @@ public class VariabeTable {
         return addr;
     }
 
-    public String getScope() {
+    public String  getScope() {
         return scope;
     }
 
@@ -43,7 +61,7 @@ public class VariabeTable {
         this.addr = addr;
     }
 
-    public void setScope(String scope) {
+    public void setScope(String  scope) {
         this.scope = scope;
     }
 }

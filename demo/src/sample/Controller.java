@@ -178,12 +178,28 @@ public class Controller {
         yufa.parser(tokenList,wordList);
         for(int i = 1; i < midCodeTables.size(); i++){
             outputText_up.appendText(i+"\t");
-            outputText_up.appendText(midCodeTables.get(i).getOperater()+",");
-            outputText_up.appendText(midCodeTables.get(i).getObject1()+",");
-            outputText_up.appendText(midCodeTables.get(i).getObject2()+",");
+            outputText_up.appendText(midCodeTables.get(i).getOperater()+", ");
+            outputText_up.appendText(midCodeTables.get(i).getObject1()+", ");
+            outputText_up.appendText(midCodeTables.get(i).getObject2()+", ");
             outputText_up.appendText(midCodeTables.get(i).getResult()+"\n");
         }
     }
+
+    @FXML
+    public void onSymbolTable(ActionEvent event) {
+        outputText_down.clear();
+        str = inputText.getText();
+        Cifa cifa = new Cifa();
+        Yufa yufa = new Yufa();
+        cifa.SortFirstChar(str);
+        List<String> tokenList = cifa.getValue();
+        List<String> wordList = cifa.getToken();
+        tokenList.add("#");
+        yufa.parser(tokenList,wordList);
+        String symbolTable = yufa.getSymbolTable();
+        outputText_down.appendText(symbolTable);
+    }
+
     @FXML
     void onYufa(ActionEvent event) {
         outputText_down.clear();
@@ -219,28 +235,6 @@ public class Controller {
         for(int i = 0; i < TokenList.size(); i++){
             outputText_up.appendText(TokenList.get(i)+"\t\t\t\t"+ValueList.get(i)+"\n");
         }
-//        while (end < str.length()) {
-//            ch = str.charAt(begin);
-//            if (ch == ' '||ch == '\t') {
-//                RecognizeWS(ch);
-//            }else if(ch == '\n') {
-//                column = 0;
-//                row++;
-//            }else if (Character.isLetter(ch) || ch == '_') {
-//                outputText_up.appendText(Recognize1_3(ch)+"\n");
-//            } else if (Character.isDigit(ch)) {
-//                outputText_up.appendText(Recognize1_4(ch)+"\n");
-//            } else if(ch == '/'){
-//                outputText_up.appendText(Recognize1_5(ch)+"\n");
-//            }else {
-//                outputText_up.appendText(Recognize1_8(ch)+"\n");
-//            }
-//            begin = end + 1;
-//            end = begin;
-//
-//        }
     }
-
-
 
 }

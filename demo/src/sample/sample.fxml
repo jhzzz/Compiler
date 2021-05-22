@@ -57,7 +57,8 @@
             </Menu>
             <Menu mnemonicParsing="false" text="中间代码">
                <items>
-                  <MenuItem fx:id="getMidCode" mnemonicParsing="false" onAction="#onMidCode" text="中间代码生成" />
+                  <MenuItem fx:id="getMidCode" mnemonicParsing="false" onAction="#onMidCode" text="生成中间代码" />
+                  <MenuItem fx:id="symbolTable" mnemonicParsing="false" onAction="#onSymbolTable" text="生成符号表" />
                </items></Menu>
             <Menu fx:id="getObjectCode" mnemonicParsing="false" onAction="#onGetObjectCode" text="目标代码生成" />
             <Menu mnemonicParsing="false" text="查看">
